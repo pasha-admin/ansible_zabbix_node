@@ -1,0 +1,11 @@
+# centos 7
+---
+- name: install and configure zabbix-agent 
+  hosts: localhost
+  connection: local
+  become: true
+  tasks: 
+  - name: Install zabbix-agent
+    ansible.builtin.package:
+      name: zabbix-agent
+      state: present
