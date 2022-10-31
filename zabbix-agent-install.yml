@@ -1,4 +1,8 @@
 # centos 7
+# Virtualizor
+# ansible-playbook zabbix-agent-install.yml   --extra-vars "HostMetadata=Virtualizor_Client_Node  HostName=УКАЖИ_ХОСТНЕЙМ"
+# VMmanager
+# ansible-playbook zabbix-agent-install.yml   --extra-vars "HostMetadata=VMmanager_Client_Node  HostName=УКАЖИ_ХОСТНЕЙМ"
 ---
 - name: install and configure zabbix-agent 
   hosts: localhost
@@ -9,3 +13,48 @@
     ansible.builtin.package:
       name: zabbix-agent
       state: present
+  - name: Create a directory for Include
+    ansible.builtin.file:
+      path: /etc/zabbix_agentd.conf.d/
+      state: directory
+      mode: '0755'      
+  - name: Copy Include config files
+    copy:
+      src: ./src/
+      dest: /etc/zabbix_agentd.conf.d/
+      directory_mode: yes
+
+  - name: Copy main config file
+    copy:
+      src: ./zabbix_agentd.conf
+      dest: /etc/zabbix_agentd.conf
+
+  - name:  Set Hostname
+    ansible.builtin.lineinfile:
+      path: /etc/zabbix_agentd.conf
+      regexp: '^Hostname='
+      line: "Hostname= {{HostName}}"
+
+  - name:  Set Hostname
+    ansible.builtin.lineinfile:
+      path: /etc/zabbix_agentd.conf
+      regexp: '^HostMetadata='
+      line: "HostMetadata= {{HostMetadata}}"      
+
+  - name:  Set HostMetadata
+    ansible.builtin.lineinfile:
+      path: /etc/zabbix_agentd.conf
+      regexp: '^HostMetadata='
+      line: "HostMetadata= {{HostMetadata}}"      
+
+  - name: Allow zabbix in sudoers 
+    ansible.builtin.lineinfile:
+      path: /etc/sudoers
+      regexp: '^zabbix'
+      line: 'zabbix ALL=(ALL) NOPASSWD:/usr/sbin/csf, /usr/lib64/nagios/plugins/check_csf.sh'
+
+  - name: Enable and start service zabbix-agent
+    ansible.builtin.service:
+      name: zabbix-agent
+      state: started
+      enabled: yes
